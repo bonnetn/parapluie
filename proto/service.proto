@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package parapluie;
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+message WriteCondition {
+  google.protobuf.UInt64Value version_equals = 1; // 0 means not exists
+}
+
+
+message PartitionKey {
+  string value = 1;
+}
+
+message SortKey {
+  string value = 1;
+}
+
+message Item {
+  PartitionKey partition_key = 1;
+  SortKey sort_key = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  uint64 version = 5;
+  bytes value = 6;
+}
+
+message SetRequest {
+  PartitionKey partition_key = 1;
+  repeated SetValue set_values = 2;
+}
+
+message SetValue {
+  SortKey sort_key = 1;
+  WriteCondition write_condition = 2;
+  bytes value = 3;
+}
+
+message SetResponse {
+  bool updated = 1;
+}
+
+message GetRequest {
+  PartitionKey partition_key = 1;
+  SortKey sort_key = 2;
+}
+
+message GetResponse {
+  Item item = 1;
+}
+
+message ListRequest {
+  PartitionKey partition_key = 1;
+  Range range = 2;
+  uint32 page_size = 3;
+}
+
+message Range {
+  Bound start = 1;
+  Bound end = 2;
+}
+
+message Bound {
+  oneof bound {
+    SortKey included = 1;
+    SortKey excluded = 2;
+    Unbounded unbounded = 3;
+  }
+}
+
+message Unbounded {}
+
+message ListResponse {
+  repeated Item items = 1;
+}
+
+service ParapluieDb {
+  rpc Set(SetRequest) returns (SetResponse);
+  rpc Get(GetRequest) returns (GetResponse);
+  rpc List(ListRequest) returns (ListResponse);
+}
